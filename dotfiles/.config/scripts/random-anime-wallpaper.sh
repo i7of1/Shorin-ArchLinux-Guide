@@ -135,6 +135,27 @@ else
     MSG_EXTRA="(Upscale Disabled)"
 fi
 
+# --- 2.5 统一转换为 JPG 格式 ---
+if command -v magick &> /dev/null; then
+    # 获取当前文件扩展名（小写）
+    EXT=$(echo "${FINAL_PATH##*.}" | tr '[:upper:]' '[:lower:]')
+    send_notify "Wallpaper" "Converting to JPG..." "--expire-time=2000"
+    JPG_PATH="${FINAL_PATH%.*}.jpg"
+    # 避免覆盖已存在的文件
+    if [ -f "$JPG_PATH" ]; then
+        JPG_PATH="${FINAL_PATH%.*}_converted.jpg"
+    fi
+    if magick "$FINAL_PATH" -quality 92 "$JPG_PATH"; then
+        rm -f "$FINAL_PATH"
+        FINAL_PATH="$JPG_PATH"
+        MSG_EXTRA="$MSG_EXTRA + JPG"
+    else
+        send_notify "Wallpaper Warning" "JPG conversion failed, using original" "--expire-time=2000"
+    fi
+else
+    send_notify "Wallpaper Warning" "magick not found, skipping JPG conversion" "--expire-time=2000"
+fi
+
 # --- 3. 应用模块 ---
 
 swww img "$FINAL_PATH" --transition-duration 2 --transition-type center --transition-fps 60
